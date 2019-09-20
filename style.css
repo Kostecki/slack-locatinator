@@ -1,0 +1,37 @@
+body {
+  text-align: center;
+}
+
+.title {
+  margin-top: 50px;
+}
+.title h1 {
+  margin: 0;
+}
+
+.channel {
+  margin: 25px 0;
+}
+
+.submit {
+  position: relative;
+}
+
+.loader {
+  margin-top: 6px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: none;
+}
+
+.input-group > .input-group-prepend {
+  flex: 0 0 40px;
+}
+.input-group .input-group-text {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
