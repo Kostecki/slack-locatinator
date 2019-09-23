@@ -12,6 +12,9 @@ usernameInput.addEventListener('input', validateForm);
 channelInput.addEventListener('input', validateForm);
 
 validateForm();
+getChannelName(channelInput.value);
+
+var incommingChannel = null;
 
 function getLocation() {
   loadingElement.style.display = 'block';
@@ -30,7 +33,7 @@ function reverseGeocode(position) {
   var url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${config.mapBoxToken}`
   axios.get(url)
     .then(function(resp) {
-      postToSlack(lat, lng, resp.data.features[1].place_name)
+      sendToSlack(lat, lng, resp.data.features[1].place_name)
     })
     .catch(function(err) {
       loadingElement.style.display = 'none';
@@ -39,11 +42,26 @@ function reverseGeocode(position) {
     })
 }
 
-function postToSlack(lat, lng, address) {
-  var payload = {
-    channel: channelInput.value,
-    blocks: [
-      {
+function getChannelName(channelId) {
+  axios.get('https://slack.com/api/conversations.info', {
+    params: {
+      token: config.slackOAuthToken,
+      channel: channelInput.value,
+    }
+  })
+  .then(function (response) {
+    incommingChannel = response.data.channel.name;
+    channelInput.value = incommingChannel;
+    submitBtnText.innerHTML = `Post in #${incommingChannel}`;
+  })
+  .catch(function (err) {
+    console.log('failed looking up channel by id', err)
+  })
+}
+
+function sendToSlack(lat, lng, address) {
+  var blocks = [
+    {
         "type": "section",
         "text": {
           "type": "mrkdwn",
@@ -60,19 +78,27 @@ function postToSlack(lat, lng, address) {
         "image_url": `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-marker+285A98(${lng},${lat})/${lng},${lat},13,0/600x300?access_token=${config.mapBoxToken}&attribution=false&logo=false`,
         "alt_text": `The current location of ${usernameInput.value}`
       }
-    ]
-  }
-
-  axios.post(config.slackWebhookURL, JSON.stringify(payload))
-    .then(function () {
-      loadingElement.style.display = 'none';
-      submitBtnText.style.opacity = 100;
-    })
-    .catch(function (err) {
-      loadingElement.style.display = 'none';
-      submitBtnText.style.opacity = 100;
-      console.log('failed posting to slack', err);
-    })
+  ]
+  
+  axios.defaults.headers.get['Content-Type'] = 'application/x-www-form-urlencoded';
+  axios.get('https://slack.com/api/chat.postMessage', {
+    params: {
+      token: config.slackOAuthToken,
+      channel: incommingChannel,
+      blocks: JSON.stringify(blocks),
+      unfurl_links: true,
+      unfurl_media: true
+    }
+  })
+  .then(function () {
+    loadingElement.style.display = 'none';
+    submitBtnText.style.opacity = 100;
+  })
+  .catch(function (err) {
+    loadingElement.style.display = 'none';
+    submitBtnText.style.opacity = 100;
+    console.log('failed posting to slack', err);
+  })
 }
 
 function validateForm() {
