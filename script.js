@@ -77,7 +77,7 @@ function sendToSlack(lat, lng, address) {
           "text": address || 'Current location',
           "emoji": true
         },
-        "image_url": `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-marker+285A98(${lng},${lat})/${lng},${lat},13,0/600x400?access_token=${config.mapBoxToken}&attribution=false&logo=false`,
+        "image_url": `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-marker+285A98(${lng},${lat})/${lng},${lat},13,0/600x300?access_token=${config.mapBoxToken}&attribution=false&logo=false`,
         "alt_text": `The current location of ${usernameInput.value}`
       }
   ]
