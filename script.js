@@ -4,13 +4,23 @@ var submitBtn = document.querySelector('.submit-btn');
 var submitBtnText = document.querySelector('.btn-text');
 var loadingElement = document.querySelector('.loader');
 
-var urlParams = new URLSearchParams(window.location.search);
-usernameInput.value = urlParams.get('user');
-channelInput.value = urlParams.get('channel');
+var url = new URLSearchParams(window.location.search);
+var username = url.get('user');
+var channel = url.get('channel');
+
+usernameInput.value = username;
+channelInput.value = channel;
+submitBtnText.innerHTML += channel;
 
 usernameInput.addEventListener('input', validateForm);
+channelInput.addEventListener('input', validateForm);
 
-validateForm();
+let autoEnabled = (url.get('auto') == 'true');
+if (autoEnabled) {
+  getLocation();
+} else {
+  validateForm(); 
+}
 
 function getLocation() {
   loadingElement.style.display = 'block';
@@ -44,7 +54,7 @@ function sendToSlack(lat, lng, address) {
         "type": "section",
         "text": {
           "type": "mrkdwn",
-          "text": `The current location of ${usernameInput.value}: \n http://maps.google.com/maps?&z=16&q=${lat}+${lng}&ll=${lat}+${lng}`
+          "text": `The current location of ${username}: \n http://maps.google.com/maps?&z=16&q=${lat}+${lng}&ll=${lat}+${lng}`
         }
       },
       {
@@ -55,7 +65,7 @@ function sendToSlack(lat, lng, address) {
           "emoji": true
         },
         "image_url": `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-marker+285A98(${lng},${lat})/${lng},${lat},13,0/600x300?access_token=${config.mapBoxToken}&attribution=false&logo=false`,
-        "alt_text": `The current location of ${usernameInput.value}`
+        "alt_text": `The current location of ${username}`
       }
   ]
   
@@ -63,7 +73,7 @@ function sendToSlack(lat, lng, address) {
   axios.get('https://slack.com/api/chat.postMessage', {
     params: {
       token: config.slackOAuthToken,
-      channel: channelName,
+      channel: channel,
       blocks: JSON.stringify(blocks),
       unfurl_links: true,
       unfurl_media: true,
@@ -82,7 +92,12 @@ function sendToSlack(lat, lng, address) {
 }
 
 function validateForm() {
-  if (usernameInput.value && channelInput.value) {
+  username = usernameInput.value;
+  channel = channelInput.value;
+
+  submitBtnText.innerHTML = `Post in #${channel}`;
+
+  if (username && channel) {
     submitBtn.classList.remove('disabled');
     submitBtn.addEventListener('click', getLocation);
   } else {

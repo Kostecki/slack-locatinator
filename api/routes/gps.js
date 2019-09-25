@@ -4,6 +4,7 @@ var router = express.Router();
 router.post('/', function(req, res, next) {
   let sender = req.body.user_name;
   let channel = req.body.channel_name;
+  let auto = req.body.text;
 
   res.send(
     {
@@ -19,7 +20,7 @@ router.post('/', function(req, res, next) {
                 "name": "game",
                 "text": "Get location",
                 "type": "button",
-                "url": `https://israndom.win/thunderducks?user=${sender}&channel=${channel}`
+                "url": `https://israndom.win/thunderducks?user=${sender}&channel=${channel}&auto=${auto}`
             }
           ]
         }
