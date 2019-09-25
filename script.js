@@ -5,18 +5,12 @@ var submitBtnText = document.querySelector('.btn-text');
 var loadingElement = document.querySelector('.loader');
 
 var urlParams = new URLSearchParams(window.location.search);
-usernameInput.value = urlParams.get('u');
-channelInput.value = urlParams.get('c');
+usernameInput.value = urlParams.get('user');
+channelInput.value = urlParams.get('channel');
 
 usernameInput.addEventListener('input', validateForm);
-channelInput.addEventListener('input', validateForm);
 
 validateForm();
-if (channelInput.value) {
-  getChannelName(channelInput.value);
-}
-
-var incommingChannel = null;
 
 function getLocation() {
   loadingElement.style.display = 'block';
@@ -44,23 +38,6 @@ function reverseGeocode(position) {
     })
 }
 
-function getChannelName(channelId) {
-  axios.get('https://slack.com/api/conversations.info', {
-    params: {
-      token: config.slackOAuthToken,
-      channel: channelInput.value,
-    }
-  })
-  .then(function (response) {
-    incommingChannel = response.data.channel.name
-    channelInput.value = incommingChannel;
-    submitBtnText.innerHTML = `Post in #${incommingChannel}`;
-  })
-  .catch(function (err) {
-    console.log('failed looking up channel by id', err)
-  })
-}
-
 function sendToSlack(lat, lng, address) {
   var blocks = [
     {
@@ -86,7 +63,7 @@ function sendToSlack(lat, lng, address) {
   axios.get('https://slack.com/api/chat.postMessage', {
     params: {
       token: config.slackOAuthToken,
-      channel: incommingChannel || channelInput.value,
+      channel: channelName,
       blocks: JSON.stringify(blocks),
       unfurl_links: true,
       unfurl_media: true,
@@ -105,10 +82,6 @@ function sendToSlack(lat, lng, address) {
 }
 
 function validateForm() {
-  if (channelInput.value) {
-    submitBtnText.innerHTML = `Post in #${channelInput.value}`; 
-  }
-
   if (usernameInput.value && channelInput.value) {
     submitBtn.classList.remove('disabled');
     submitBtn.addEventListener('click', getLocation);
