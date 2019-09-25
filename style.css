@@ -2,6 +2,15 @@ body {
   text-align: center;
 }
 
+#status-alert {
+  display: none;
+}
+
+#status-alert .close {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
 .title {
   margin-top: 50px;
 }

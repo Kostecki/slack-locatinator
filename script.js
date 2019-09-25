@@ -1,3 +1,5 @@
+var alertElement = document.getElementById('status-alert');
+var alertElementContent = document.querySelector('#status-alert .content');
 var usernameInput = document.querySelector('#usernameInput');
 var channelInput = document.querySelector('#channelInput');
 var submitBtn = document.querySelector('.submit-btn');
@@ -14,6 +16,7 @@ submitBtnText.innerHTML += channel;
 
 usernameInput.addEventListener('input', validateForm);
 channelInput.addEventListener('input', validateForm);
+alertElement.addEventListener('click', clearAlert)
 
 let autoEnabled = (url.get('auto') == 'true');
 if (autoEnabled) {
@@ -29,7 +32,9 @@ function getLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(reverseGeocode);
   } else {
-    x.innerHTML = 'Geolocation is not supported by this browser.';
+    loadingElement.style.display = 'none';
+    submitBtnText.style.opacity = 100;
+    setAlert('danger', 'Geolocation is not supported by this browser');
   }
 }
 
@@ -44,7 +49,7 @@ function reverseGeocode(position) {
     .catch(function(err) {
       loadingElement.style.display = 'none';
       submitBtnText.style.opacity = 100;
-      console.log('failed reverse geocode', err)
+      setAlert('danger', `Failed doing reverse geocode: <span class="alert-link">${err}</span>`);
     })
 }
 
@@ -80,14 +85,20 @@ function sendToSlack(lat, lng, address) {
       as_user: false
     }
   })
-  .then(function () {
+  .then(function (res) {
     loadingElement.style.display = 'none';
     submitBtnText.style.opacity = 100;
+
+    if (!res.data.ok) {
+      setAlert('danger', `Error posting to slack: <span class="alert-link">${res.data.error}</span>`);
+    } else {
+      setAlert('success', `Succesfully posted location to <span class="alert-link">#${channel}</span!`);
+    }
   })
   .catch(function (err) {
     loadingElement.style.display = 'none';
     submitBtnText.style.opacity = 100;
-    console.log('failed posting to slack', err);
+    setAlert('danger', `Error posting to slack: <span class="alert-link">${err}</span>`);
   })
 }
 
@@ -104,4 +115,16 @@ function validateForm() {
     submitBtn.classList.add('disabled');
     submitBtn.removeEventListener('click', getLocation);
   }
+}
+
+function setAlert(type, msg) {
+  alertElementContent.innerHTML = msg;
+  alertElement.className = `alert alert-${type}`;
+  alertElement.style.display = 'block';
+}
+
+function clearAlert() {
+  alertElementContent.innerHTML = '';
+  alertElement.className = 'alert';
+  alertElement.style.display = 'none';
 }
