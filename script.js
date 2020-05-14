@@ -93,7 +93,6 @@ function sendToSlack(lat, lng, address) {
       setAlert('danger', `Error posting to slack: <span class="alert-link">${res.data.error}</span>`);
     } else {
       setAlert('success', `Succesfully posted location to <span class="alert-link">#${channel}</span!`);
-      window.location.href =" slack://"
     }
   })
   .catch(function (err) {
