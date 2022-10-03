@@ -1,71 +1,256 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import Image from "next/image";
-import styles from "../styles/Home.module.css";
+
+import {
+  Alert,
+  AlertColor,
+  Box,
+  Button,
+  Container,
+  createTheme,
+  CssBaseline,
+  InputAdornment,
+  TextField,
+  ThemeProvider,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+
+const theme = createTheme({
+  typography: {
+    h3: {
+      fontWeight: "bold",
+    },
+  },
+});
 
 const Home: NextPage = () => {
+  const [hasNavigator, setHasNavigator] = useState(false);
+
+  const [username, setUsername] = useState("");
+  const [channel, setChannel] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertSeverity, setAlertSeverity] = useState<AlertColor | undefined>(
+    undefined
+  );
+  const [alertMsg, setAlertMsg] = useState("");
+
+  // URL Params
+  const router = useRouter();
+
+  const doThatAlertThing = (severity: AlertColor, msg: string) => {
+    setShowAlert(true);
+    setAlertSeverity(severity);
+    setAlertMsg(msg);
+
+    setTimeout(() => {
+      setShowAlert(false);
+      setAlertSeverity(undefined);
+      setAlertMsg("");
+    }, 20000);
+  };
+
+  const sendToSlack = async (lat: number, lng: number, address: string) => {
+    const blocks = [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `The current location of ${username}: \n http://maps.google.com/maps?&z=16&q=${lat}+${lng}&ll=${lat}+${lng}`,
+        },
+      },
+      {
+        type: "image",
+        title: {
+          type: "plain_text",
+          text: address || "Current location",
+          emoji: true,
+        },
+        image_url: `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-marker+285A98(${lng},${lat})/${lng},${lat},13,0/600x300?access_token=${process.env.NEXT_PUBLIC_MAP_BOX_TOKEN}&attribution=false&logo=false`,
+        alt_text: `The current location of ${username}`,
+      },
+    ];
+
+    const url = new URL("https://slack.com/api/chat.postMessage");
+    const params = {
+      token: process.env.NEXT_PUBLIC_SLACK_OAUTH_TOKEN || "",
+      channel,
+      blocks: JSON.stringify(blocks),
+      unfurl_links: "true",
+      unfurl_media: "true",
+      as_user: "false",
+    };
+    url.search = new URLSearchParams(params).toString();
+
+    const resp = await fetch(url, {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+    if (resp.ok) {
+      doThatAlertThing(
+        "success",
+        `Succesfully posted location to #${channel}!`
+      );
+    } else {
+      doThatAlertThing("error", `Error posting to slack #${channel}!`);
+    }
+
+    setLoading(false);
+  };
+
+  const reverseGeocode = async (position: GeolocationPosition) => {
+    console.log(position);
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${process.env.NEXT_PUBLIC_MAP_BOX_TOKEN}`;
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => sendToSlack(lat, lng, data.features[1].place_name))
+      .catch((err) => {
+        setLoading(false);
+        doThatAlertThing("error", `Failed doing reverse geocode: ${err}`);
+      });
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const getLocation = () => {
+    setLoading(true);
+
+    if (hasNavigator) {
+      navigator.geolocation.getCurrentPosition(reverseGeocode);
+    } else {
+      setLoading(false);
+      doThatAlertThing("error", "Geolocation is not supported by this browser");
+    }
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    getLocation();
+
+    // const data = new FormData(event.currentTarget);
+    // console.log({
+    //   username: data.get("username"),
+    //   slackChannel: data.get("slack-channel"),
+    // });
+    // https://israndom.win/thunderducks/?user=kostecki&channel=privategroup&auto=
+    // https://israndom.win/thunderducks/?user=kostecki&channel=privategroup&auto=true
+  };
+
+  const disableButton = () => {
+    return username.length === 0 || channel.length === 0;
+  };
+
+  const buttonText = () => {
+    if (channel) {
+      return `Post to: #${channel}`;
+    } else {
+      return "Enter the thing";
+    }
+  };
+
+  useEffect(() => {
+    if (router.isReady) {
+      const { user: pUser, channel: pChannel, auto: pAuto } = router.query;
+
+      if (pUser) {
+        setUsername(pUser.toString());
+      }
+
+      if (pChannel) {
+        setChannel(pChannel.toString());
+      }
+
+      if (pAuto && pUser && pChannel) {
+        getLocation();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady, router.query]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      setHasNavigator(true);
+    } else {
+      doThatAlertThing("error", "Geolocation is not supported by this browser");
+    }
+  }, []);
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <meta name="description" content="Generated by create next app" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <ThemeProvider theme={theme}>
+      <Container component="main" maxWidth="xs">
+        <Head>
+          <title>Slack Locatinator</title>
+        </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+        <CssBaseline />
 
-        <p className={styles.description}>
-          Get started by editing{" "}
-          <code className={styles.code}>pages/index.tsx</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        {showAlert && (
+          <Alert severity={alertSeverity as AlertColor}>{alertMsg}</Alert>
+        )}
+        <Box
+          sx={{
+            marginTop: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
         >
-          Powered by{" "}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
-    </div>
+          <Typography component="h1" variant="h3">
+            Slack Location
+          </Typography>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{ mt: 1 }}
+          >
+            <TextField
+              margin="normal"
+              fullWidth
+              id="username"
+              label="Username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">@</InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              label="Channel"
+              id="slack-channel"
+              value={channel}
+              onChange={(event) => setChannel(event.target.value)}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">#</InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              sx={{ mt: 3, mb: 2 }}
+              disabled={disableButton()}
+            >
+              {loading ? "Loading..." : buttonText()}
+            </Button>
+          </Box>
+        </Box>
+      </Container>
+    </ThemeProvider>
   );
 };
 

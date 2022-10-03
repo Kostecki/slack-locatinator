@@ -1,5 +1,8 @@
-# Created by https://www.toptal.com/developers/gitignore/api/nextjs,macos,visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=nextjs,macos,visualstudiocode
+# Created by https://www.toptal.com/developers/gitignore/api/macos,nextjs,visualstudiocode,dotenv
+# Edit at https://www.toptal.com/developers/gitignore?templates=macos,nextjs,visualstudiocode,dotenv
+
+### dotenv ###
+.env
 
 ### macOS ###
 # General
@@ -93,4 +96,4 @@ yarn-error.log*
 # Ignore code-workspaces
 *.code-workspace
 
-# End of https://www.toptal.com/developers/gitignore/api/nextjs,macos,visualstudiocode
+# End of https://www.toptal.com/developers/gitignore/api/macos,nextjs,visualstudiocode,dotenv
