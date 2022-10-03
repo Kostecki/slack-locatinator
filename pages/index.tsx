@@ -5,7 +5,6 @@ import {
   Alert,
   AlertColor,
   Box,
-  Button,
   Container,
   createTheme,
   CssBaseline,
@@ -14,6 +13,7 @@ import {
   ThemeProvider,
   Typography,
 } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
@@ -38,7 +38,6 @@ const Home: NextPage = () => {
   );
   const [alertMsg, setAlertMsg] = useState("");
 
-  // URL Params
   const router = useRouter();
 
   const doThatAlertThing = (severity: AlertColor, msg: string) => {
@@ -50,7 +49,7 @@ const Home: NextPage = () => {
       setShowAlert(false);
       setAlertSeverity(undefined);
       setAlertMsg("");
-    }, 20000);
+    }, 2000);
   };
 
   const sendToSlack = async (lat: number, lng: number, address: string) => {
@@ -103,7 +102,6 @@ const Home: NextPage = () => {
   };
 
   const reverseGeocode = async (position: GeolocationPosition) => {
-    console.log(position);
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${process.env.NEXT_PUBLIC_MAP_BOX_TOKEN}`;
@@ -117,7 +115,6 @@ const Home: NextPage = () => {
       });
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const getLocation = () => {
     setLoading(true);
 
@@ -132,26 +129,10 @@ const Home: NextPage = () => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     getLocation();
-
-    // const data = new FormData(event.currentTarget);
-    // console.log({
-    //   username: data.get("username"),
-    //   slackChannel: data.get("slack-channel"),
-    // });
-    // https://israndom.win/thunderducks/?user=kostecki&channel=privategroup&auto=
-    // https://israndom.win/thunderducks/?user=kostecki&channel=privategroup&auto=true
   };
 
   const disableButton = () => {
     return username.length === 0 || channel.length === 0;
-  };
-
-  const buttonText = () => {
-    if (channel) {
-      return `Post to: #${channel}`;
-    } else {
-      return "Enter the thing";
-    }
   };
 
   useEffect(() => {
@@ -238,15 +219,16 @@ const Home: NextPage = () => {
                 ),
               }}
             />
-            <Button
+            <LoadingButton
+              loading={loading}
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
               disabled={disableButton()}
             >
-              {loading ? "Loading..." : buttonText()}
-            </Button>
+              Post to channel
+            </LoadingButton>
           </Box>
         </Box>
       </Container>
