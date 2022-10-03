@@ -20,9 +20,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN NEXT_PUBLIC_MAP_BOX_TOKEN=NEXT_PUBLIC_MAP_BOX_TOKEN
-RUN NEXT_PUBLIC_SLACK_OAUTH_TOKEN=APP_NEXT_PUBLIC_SLACK_OAUTH_TOKEN
-
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
