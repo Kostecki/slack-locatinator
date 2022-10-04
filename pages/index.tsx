@@ -49,69 +49,31 @@ const Home: NextPage = () => {
       setShowAlert(false);
       setAlertSeverity(undefined);
       setAlertMsg("");
-    }, 2000);
+    }, 3000);
   };
 
-  const sendToSlack = async (lat: number, lng: number, address: string) => {
-    const blocks = [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: `The current location of ${username}: \n http://maps.google.com/maps?&z=16&q=${lat}+${lng}&ll=${lat}+${lng}`,
-        },
-      },
-      {
-        type: "image",
-        title: {
-          type: "plain_text",
-          text: address || "Current location",
-          emoji: true,
-        },
-        image_url: `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s-marker+285A98(${lng},${lat})/${lng},${lat},13,0/600x300?access_token=${process.env.NEXT_PUBLIC_MAP_BOX_TOKEN}&attribution=false&logo=false`,
-        alt_text: `The current location of ${username}`,
-      },
-    ];
-
-    const url = new URL("https://slack.com/api/chat.postMessage");
-    const params = {
-      token: process.env.NEXT_PUBLIC_SLACK_OAUTH_TOKEN || "",
-      channel,
-      blocks: JSON.stringify(blocks),
-      unfurl_links: "true",
-      unfurl_media: "true",
-      as_user: "false",
-    };
-    url.search = new URLSearchParams(params).toString();
-
-    const resp = await fetch(url, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-    if (resp.ok) {
-      doThatAlertThing(
-        "success",
-        `Succesfully posted location to #${channel}!`
-      );
-    } else {
-      doThatAlertThing("error", `Error posting to slack #${channel}!`);
-    }
-
-    setLoading(false);
-  };
-
-  const reverseGeocode = async (position: GeolocationPosition) => {
+  const sendToSlack = (position: GeolocationPosition) => {
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${process.env.NEXT_PUBLIC_MAP_BOX_TOKEN}`;
 
-    fetch(url)
+    fetch("/api", {
+      method: "POST",
+      body: JSON.stringify({ username, channel, lat, lng }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((response) => response.json())
-      .then((data) => sendToSlack(lat, lng, data.features[1].place_name))
+      .then((data) => {
+        doThatAlertThing(
+          "success",
+          `Succesfully posted location to #${data.channel}!`
+        );
+        setLoading(false);
+      })
       .catch((err) => {
         setLoading(false);
-        doThatAlertThing("error", `Failed doing reverse geocode: ${err}`);
+        doThatAlertThing("error", `Failed posting to Slack: ${err}`);
       });
   };
 
@@ -119,7 +81,7 @@ const Home: NextPage = () => {
     setLoading(true);
 
     if (hasNavigator) {
-      navigator.geolocation.getCurrentPosition(reverseGeocode);
+      navigator.geolocation.getCurrentPosition(sendToSlack);
     } else {
       setLoading(false);
       doThatAlertThing("error", "Geolocation is not supported by this browser");
