@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/app
-  PORTAINER_WEBHOOK: ${{ secrets.SlackLocatinatorPortainerWebhook }}
+  PORTAINER_WEBHOOK: ${{ secrets.SLACK_LOCATINATOR_PORTAINER_WEBHOOK }}
 
 jobs:
   build-and-push-image:
@@ -42,8 +42,12 @@ jobs:
         with:
           context: .
           push: true
+
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}
+            SLACK_OAUTH_TOKEN=${{ secrets.SLACK_OAUTH_TOKEN }}
 
       - name: Ping Portainer
         uses: fjogeleit/http-request-action@v1
