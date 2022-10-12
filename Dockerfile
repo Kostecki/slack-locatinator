@@ -21,6 +21,8 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Create .env file with tokens required for building
+# PUBLIC_MAPBOX_TOKEN=
+# PUBLIC_SLACK_OAUTH_TOKEN
 RUN --mount=type=secret,id=TOKENS \
   cat /run/secrets/TOKENS >> .env
 
