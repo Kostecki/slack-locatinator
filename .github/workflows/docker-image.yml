@@ -37,6 +37,13 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Make envfile
+        uses: SpicyPizza/create-envfile@v1.3
+        with:
+          PUBLIC_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+          PUBLIC_SLACK_OAUTH_TOKEN: ${{ secrets.SLACK_OAUTH_TOKEN }}
+          fail_on_empty: true
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
@@ -45,9 +52,6 @@ jobs:
 
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            MAPBOX_TOKEN=${{ secrets.MAPBOX_TOKEN }}
-            SLACK_OAUTH_TOKEN=${{ secrets.SLACK_OAUTH_TOKEN }}
 
       - name: Ping Portainer
         uses: fjogeleit/http-request-action@v1
