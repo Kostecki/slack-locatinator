@@ -20,6 +20,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+RUN --mount=type=secret,id=PUBLIC_MAPBOX_TOKEN \
+  cat /run/secrets/PUBLIC_MAPBOX_TOKEN >> .env
+
+RUN --mount=type=secret,id=PUBLIC_SLACK_OAUTH_TOKEN \
+  cat /run/secrets/PUBLIC_SLACK_OAUTH_TOKEN >> .env
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
