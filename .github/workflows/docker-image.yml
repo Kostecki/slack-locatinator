@@ -43,8 +43,8 @@ jobs:
           context: .
           push: true
           secrets: |
-            "PUBLIC_MAPBOX_TOKEN={{ secrets.MAPBOX_TOKEN }}
-            "PUBLIC_SLACK_OAUTH_TOKEN={{ secrets.SLACK_OAUTH_TOKEN }}"
+            PUBLIC_MAPBOX_TOKEN={{ secrets.MAPBOX_TOKEN }}
+            PUBLIC_SLACK_OAUTH_TOKEN={{ secrets.SLACK_OAUTH_TOKEN }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
