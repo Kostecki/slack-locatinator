@@ -29,7 +29,8 @@ const Home: NextPage = () => {
   const [hasNavigator, setHasNavigator] = useState(false);
 
   const [username, setUsername] = useState("");
-  const [channel, setChannel] = useState("");
+  const [channelId, setChannelId] = useState("");
+  const [channelName, setChannelName] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [showAlert, setShowAlert] = useState(false);
@@ -58,16 +59,16 @@ const Home: NextPage = () => {
 
     fetch("/api", {
       method: "POST",
-      body: JSON.stringify({ username, channel, lat, lng }),
+      body: JSON.stringify({ username, channel: channelId, lat, lng }),
       headers: {
         "Content-Type": "application/json",
       },
     })
       .then((response) => response.json())
-      .then((data) => {
+      .then(() => {
         doThatAlertThing(
           "success",
-          `Succesfully posted location to #${data.channel}!`
+          `Succesfully posted location to #${channelName}!`
         );
         setLoading(false);
       })
@@ -94,22 +95,26 @@ const Home: NextPage = () => {
   };
 
   const disableButton = () => {
-    return username.length === 0 || channel.length === 0;
+    return username.length === 0 || channelName.length === 0;
   };
 
   useEffect(() => {
     if (router.isReady) {
-      const { user: pUser, channel: pChannel, auto: pAuto } = router.query;
+      const { u: user, id: channelId, n: channelName, a: auto } = router.query;
 
-      if (pUser) {
-        setUsername(pUser.toString());
+      if (user) {
+        setUsername(user.toString());
       }
 
-      if (pChannel) {
-        setChannel(pChannel.toString());
+      if (channelId) {
+        setChannelId(channelId.toString());
       }
 
-      if (pAuto && pUser && pChannel) {
+      if (channelName) {
+        setChannelName(channelName.toString());
+      }
+
+      if (auto && user && channelId) {
         getLocation();
       }
     }
@@ -172,8 +177,8 @@ const Home: NextPage = () => {
               fullWidth
               label="Channel"
               id="slack-channel"
-              value={channel}
-              onChange={(event) => setChannel(event.target.value)}
+              value={channelName}
+              onChange={(event) => setChannelName(event.target.value)}
               required
               InputProps={{
                 startAdornment: (

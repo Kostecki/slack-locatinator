@@ -86,7 +86,7 @@ export default async function handler(
             res.status(200).json({
               status: "success",
               username: username,
-              channel: channel,
+              channel,
             });
           } else {
             res.status(500).json({ error: data.error });

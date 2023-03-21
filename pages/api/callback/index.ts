@@ -4,15 +4,22 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log("api/callback/index.ts", req);
   if (req.method === "POST") {
-    const { user_name, channel_name, text } = req.body;
+    const { user_name, channel_name, channel_id, text } = req.body;
 
-    if (user_name && channel_name) {
-      let url = `https://thunderducks.israndom.win?user=${user_name}&channel=${channel_name}`;
+    if (user_name && (channel_id || channel_name)) {
+      let url = `https://thunderducks.israndom.win?u=${user_name}`;
+
+      if (channel_id) {
+        url += `&id=${channel_id.toUpperCase()}`;
+      }
+
+      if (channel_name) {
+        url += `&n=${channel_name}`;
+      }
 
       if (text && text === "true") {
-        url += `&auto=${text}`;
+        url += `&a=${text}`;
       }
 
       res.status(200).json({
@@ -37,7 +44,7 @@ export default async function handler(
       });
     } else {
       res.status(400).json({
-        error: "Missing parameters: user_name, channel_name",
+        error: "Missing parameters: user_name, channel_id/channel_name",
       });
     }
   }
