@@ -4,13 +4,12 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log("api/callback/index.ts", req);
   if (req.method === "POST") {
     const { user_name, channel_name, text } = req.body;
 
     if (user_name && channel_name) {
       let url = `https://israndom.win/thunderducks?user=${user_name}&channel=${channel_name}`;
-
-      console.log(text);
 
       if (text && text === "true") {
         url += `&auto=${text}`;
