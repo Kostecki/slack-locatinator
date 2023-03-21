@@ -9,7 +9,7 @@ export default async function handler(
     const { user_name, channel_name, text } = req.body;
 
     if (user_name && channel_name) {
-      let url = `https://israndom.win/thunderducks?user=${user_name}&channel=${channel_name}`;
+      let url = `https://thunderducks.israndom.win?user=${user_name}&channel=${channel_name}`;
 
       if (text && text === "true") {
         url += `&auto=${text}`;
@@ -20,7 +20,7 @@ export default async function handler(
         attachments: [
           {
             fallback:
-              "You are unable to get the button. Go to https://israndom.win/thunderducks",
+              "You are unable to get the button. Go to https://thunderducks.israndom.win",
             callback_id: "location_trigger",
             color: "#3AA3E3",
             attachment_type: "default",
