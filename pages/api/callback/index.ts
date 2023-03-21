@@ -11,7 +11,7 @@ export default async function handler(
       let url = `https://thunderducks.israndom.win?u=${user_name}`;
 
       if (channel_id) {
-        url += `&id=${channel_id.toUpperCase()}`;
+        url += `&id=${channel_id}`;
       }
 
       if (channel_name) {

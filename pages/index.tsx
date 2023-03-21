@@ -100,26 +100,28 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     if (router.isReady) {
-      const { u: user, id: channelId, n: channelName, a: auto } = router.query;
-
+      const { u: user, id: chId, n: chName } = router.query;
       if (user) {
         setUsername(user.toString());
       }
 
-      if (channelId) {
-        setChannelId(channelId.toString());
+      if (chId) {
+        const id = chId.toString().toUpperCase();
+        setChannelId(id);
       }
 
-      if (channelName) {
-        setChannelName(channelName.toString());
-      }
-
-      if (auto && user && channelId) {
-        getLocation();
+      if (chName) {
+        setChannelName(chName.toString());
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.isReady, router.query]);
+
+  useEffect(() => {
+    if (channelId && channelName && router.query.a) {
+      getLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, channelName]);
 
   useEffect(() => {
     if (navigator.geolocation) {
