@@ -20,12 +20,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Create .env file with tokens required for building
-# PUBLIC_MAPBOX_TOKEN=
-# PUBLIC_SLACK_OAUTH_TOKEN
-RUN --mount=type=secret,id=TOKENS \
-  cat /run/secrets/TOKENS >> .env
-
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
