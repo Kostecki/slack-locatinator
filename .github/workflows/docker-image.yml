@@ -39,8 +39,6 @@ jobs:
         with:
           context: .
           target: runner
-          build-args: |
-            NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.PUBLIC_MAPBOX_TOKEN }}
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}

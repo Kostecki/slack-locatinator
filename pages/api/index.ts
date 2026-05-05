@@ -1,11 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const mapboxToken =
-	process.env.MAPBOX_TOKEN ??
-	process.env.NEXT_PUBLIC_MAPBOX_TOKEN ??
-	process.env.PUBLIC_MAPBOX_TOKEN;
-const slackToken =
-	process.env.SLACK_OAUTH_TOKEN ?? process.env.PUBLIC_SLACK_OAUTH_TOKEN;
+const mapboxToken = process.env.MAPBOX_TOKEN;
+const slackToken = process.env.SLACK_OAUTH_TOKEN;
 
 const slackPostURL = "https://slack.com/api/chat.postMessage";
 
