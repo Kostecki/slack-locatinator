@@ -2,7 +2,7 @@
 
 # Install dependencies only when needed
 FROM node:25-alpine AS deps
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@10
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
@@ -15,7 +15,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 # Rebuild the source code only when needed
 FROM node:25-alpine AS builder
-RUN npm install -g pnpm@9
+RUN npm install -g pnpm@10
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
