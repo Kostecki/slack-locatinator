@@ -1,208 +1,239 @@
+import {
+	Alert,
+	type AlertColor,
+	Box,
+	Button,
+	Container,
+	CssBaseline,
+	createTheme,
+	InputAdornment,
+	TextField,
+	ThemeProvider,
+	Typography,
+} from "@mui/material";
 import type { NextPage } from "next";
 import Head from "next/head";
-
-import {
-  Alert,
-  AlertColor,
-  Box,
-  Container,
-  createTheme,
-  CssBaseline,
-  InputAdornment,
-  TextField,
-  ThemeProvider,
-  Typography,
-} from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
-import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const theme = createTheme({
-  typography: {
-    h3: {
-      fontWeight: "bold",
-    },
-  },
+	typography: {
+		h3: {
+			fontWeight: "bold",
+		},
+	},
 });
 
 const Home: NextPage = () => {
-  const [hasNavigator, setHasNavigator] = useState(false);
+	const [username, setUsername] = useState("");
+	const [channelId, setChannelId] = useState("");
+	const [channelName, setChannelName] = useState("");
+	const [loading, setLoading] = useState(false);
+	const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [username, setUsername] = useState("");
-  const [channelId, setChannelId] = useState("");
-  const [channelName, setChannelName] = useState("");
-  const [loading, setLoading] = useState(false);
+	const [showAlert, setShowAlert] = useState(false);
+	const [alertSeverity, setAlertSeverity] = useState<AlertColor | undefined>(
+		undefined,
+	);
+	const [alertMsg, setAlertMsg] = useState("");
 
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertSeverity, setAlertSeverity] = useState<AlertColor | undefined>(
-    undefined
-  );
-  const [alertMsg, setAlertMsg] = useState("");
+	const router = useRouter();
+	const normalizedChannelName = channelName.trim().replace(/^#/, "");
+	const targetChannel = channelId || normalizedChannelName;
 
-  const router = useRouter();
+	const doThatAlertThing = useCallback((severity: AlertColor, msg: string) => {
+		if (alertTimeoutRef.current) {
+			clearTimeout(alertTimeoutRef.current);
+		}
 
-  const doThatAlertThing = (severity: AlertColor, msg: string) => {
-    setShowAlert(true);
-    setAlertSeverity(severity);
-    setAlertMsg(msg);
+		setShowAlert(true);
+		setAlertSeverity(severity);
+		setAlertMsg(msg);
 
-    setTimeout(() => {
-      setShowAlert(false);
-      setAlertSeverity(undefined);
-      setAlertMsg("");
-    }, 3000);
-  };
+		alertTimeoutRef.current = setTimeout(() => {
+			setShowAlert(false);
+			setAlertSeverity(undefined);
+			setAlertMsg("");
+			alertTimeoutRef.current = null;
+		}, 3000);
+	}, []);
 
-  const sendToSlack = (position: GeolocationPosition) => {
-    const lat = position.coords.latitude;
-    const lng = position.coords.longitude;
+	useEffect(() => {
+		return () => {
+			if (alertTimeoutRef.current) {
+				clearTimeout(alertTimeoutRef.current);
+			}
+		};
+	}, []);
 
-    fetch("/api", {
-      method: "POST",
-      body: JSON.stringify({ username, channel: channelId, lat, lng }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.json())
-      .then(() => {
-        doThatAlertThing(
-          "success",
-          `Succesfully posted location to #${channelName}!`
-        );
-        setLoading(false);
-      })
-      .catch((err) => {
-        setLoading(false);
-        doThatAlertThing("error", `Failed posting to Slack: ${err}`);
-      });
-  };
+	const sendToSlack = useCallback(async (position: GeolocationPosition) => {
+		const lat = position.coords.latitude;
+		const lng = position.coords.longitude;
 
-  const getLocation = () => {
-    setLoading(true);
+		try {
+			const response = await fetch("/api", {
+				method: "POST",
+				body: JSON.stringify({ username, channel: targetChannel, lat, lng }),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
 
-    if (hasNavigator) {
-      navigator.geolocation.getCurrentPosition(sendToSlack);
-    } else {
-      setLoading(false);
-      doThatAlertThing("error", "Geolocation is not supported by this browser");
-    }
-  };
+			const data = (await response.json()) as { error?: string };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    getLocation();
-  };
+			if (!response.ok) {
+				throw new Error(data.error || "Unknown server error");
+			}
 
-  const disableButton = () => {
-    return username.length === 0 || channelName.length === 0;
-  };
+			doThatAlertThing(
+				"success",
+				`Successfully posted location to #${channelName}!`,
+			);
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			doThatAlertThing("error", `Failed posting to Slack: ${message}`);
+		} finally {
+			setLoading(false);
+		}
+	}, [channelName, doThatAlertThing, targetChannel, username]);
 
-  useEffect(() => {
-    if (router.isReady) {
-      const { u: user, id: chId, n: chName } = router.query;
-      if (user) {
-        setUsername(user.toString());
-      }
+	const handleGeoError = useCallback(
+		(error: GeolocationPositionError) => {
+			setLoading(false);
+			doThatAlertThing("error", `Failed getting location: ${error.message}`);
+		},
+		[doThatAlertThing],
+	);
 
-      if (chId) {
-        const id = chId.toString().toUpperCase();
-        setChannelId(id);
-      }
+	const getLocation = useCallback(() => {
+		setLoading(true);
 
-      if (chName) {
-        setChannelName(chName.toString());
-      }
-    }
-  }, [router.isReady, router.query]);
+		if (typeof navigator !== "undefined" && navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(sendToSlack, handleGeoError);
+		} else {
+			setLoading(false);
+			doThatAlertThing("error", "Geolocation is not supported by this browser");
+		}
+	}, [doThatAlertThing, handleGeoError, sendToSlack]);
 
-  useEffect(() => {
-    if (channelId && channelName && router.query.a) {
-      getLocation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, channelName]);
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		getLocation();
+	};
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      setHasNavigator(true);
-    } else {
-      doThatAlertThing("error", "Geolocation is not supported by this browser");
-    }
-  }, []);
+	const disableButton = () => {
+		return username.trim().length === 0 || targetChannel.length === 0;
+	};
 
-  return (
-    <ThemeProvider theme={theme}>
-      <Container component="main" maxWidth="xs">
-        <Head>
-          <title>Slack Locatinator</title>
-        </Head>
+	useEffect(() => {
+		if (router.isReady) {
+			const { u: user, id: chId, n: chName } = router.query;
+			if (user) {
+				setUsername(user.toString());
+			}
 
-        <CssBaseline />
+			if (chId) {
+				const id = chId.toString().toUpperCase();
+				setChannelId(id);
+			}
 
-        {showAlert && (
-          <Alert severity={alertSeverity as AlertColor}>{alertMsg}</Alert>
-        )}
-        <Box
-          sx={{
-            marginTop: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <Typography component="h1" variant="h3">
-            Slack Location
-          </Typography>
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            noValidate
-            sx={{ mt: 1 }}
-          >
-            <TextField
-              margin="normal"
-              fullWidth
-              id="username"
-              label="Username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">@</InputAdornment>
-                ),
-              }}
-            />
-            <TextField
-              margin="normal"
-              fullWidth
-              label="Channel"
-              id="slack-channel"
-              value={channelName}
-              onChange={(event) => setChannelName(event.target.value)}
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">#</InputAdornment>
-                ),
-              }}
-            />
-            <LoadingButton
-              loading={loading}
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={disableButton()}
-            >
-              Post to channel
-            </LoadingButton>
-          </Box>
-        </Box>
-      </Container>
-    </ThemeProvider>
-  );
+			if (chName) {
+				setChannelName(chName.toString());
+			}
+		}
+	}, [router.isReady, router.query]);
+
+	const autoSubmit = router.query.a;
+
+	useEffect(() => {
+		if (channelId && channelName && autoSubmit) {
+			getLocation();
+		}
+	}, [autoSubmit, channelId, channelName, getLocation]);
+
+	useEffect(() => {
+		if (typeof navigator !== "undefined" && !navigator.geolocation) {
+			doThatAlertThing("error", "Geolocation is not supported by this browser");
+		}
+	}, [doThatAlertThing]);
+
+	return (
+		<ThemeProvider theme={theme}>
+			<Container component="main" maxWidth="xs">
+				<Head>
+					<title>Slack Locatinator</title>
+				</Head>
+
+				<CssBaseline />
+
+				{showAlert && (
+					<Alert severity={alertSeverity || "info"}>{alertMsg}</Alert>
+				)}
+				<Box
+					sx={{
+						marginTop: 8,
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+					}}
+				>
+					<Typography component="h1" variant="h3">
+						Slack Location
+					</Typography>
+					<Box
+						component="form"
+						onSubmit={handleSubmit}
+						noValidate
+						sx={{ mt: 1 }}
+					>
+						<TextField
+							margin="normal"
+							fullWidth
+							id="username"
+							label="Username"
+							value={username}
+							onChange={(event) => setUsername(event.target.value)}
+							required
+							slotProps={{
+								input: {
+									startAdornment: (
+										<InputAdornment position="start">@</InputAdornment>
+									),
+								},
+							}}
+						/>
+						<TextField
+							margin="normal"
+							fullWidth
+							label="Channel"
+							id="slack-channel"
+							value={channelName}
+							onChange={(event) => setChannelName(event.target.value)}
+							required
+							slotProps={{
+								input: {
+									startAdornment: (
+										<InputAdornment position="start">#</InputAdornment>
+									),
+								},
+							}}
+						/>
+						<Button
+							loading={loading}
+							type="submit"
+							fullWidth
+							variant="contained"
+							sx={{ mt: 3, mb: 2 }}
+							disabled={disableButton()}
+						>
+							Post to channel
+						</Button>
+					</Box>
+				</Box>
+			</Container>
+		</ThemeProvider>
+	);
 };
 
 export default Home;
