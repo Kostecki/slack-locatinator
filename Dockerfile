@@ -19,6 +19,11 @@ RUN corepack enable
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
+
+# Client-side env vars must exist at build time for Next.js to inline them.
+ARG NEXT_PUBLIC_MAPBOX_TOKEN
+ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 

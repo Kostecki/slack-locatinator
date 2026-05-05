@@ -39,8 +39,8 @@ jobs:
         with:
           context: .
           target: runner
-          build-args: PUBLIC_MAPBOX_TOKEN=${{ secrets.PUBLIC_MAPBOX_TOKEN }}
-            PUBLIC_SLACK_OAUTH_TOKEN=${{ secrets.PUBLIC_SLACK_OAUTH_TOKEN }}
+          build-args: |
+            NEXT_PUBLIC_MAPBOX_TOKEN=${{ secrets.PUBLIC_MAPBOX_TOKEN }}
           push: true
           tags: |
             ${{ steps.meta.outputs.tags }}
