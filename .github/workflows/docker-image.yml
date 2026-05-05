@@ -15,7 +15,7 @@ jobs:
 
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: ${{ github.repository }}/app
+      IMAGE_NAME: kostecki/slack-locatinator
 
     steps:
       - name: Checkout
