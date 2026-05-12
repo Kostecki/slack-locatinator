@@ -13,7 +13,7 @@
     "@fontsource/roboto": "^5.2.10",
     "@mui/lab": "^9.0.0-beta.2",
     "@mui/material": "^9.0.0",
-    "next": "16.2.4",
+    "next": "16.2.6",
     "react": "19.2.5",
     "react-dom": "19.2.5"
   },
