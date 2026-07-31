@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.25
 
 # Install dependencies only when needed
-FROM node:25-alpine AS deps
+FROM node:26-alpine AS deps
 RUN npm install -g pnpm@10
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -14,7 +14,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 
 # Rebuild the source code only when needed
-FROM node:25-alpine AS builder
+FROM node:26-alpine AS builder
 RUN npm install -g pnpm@10
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -28,7 +28,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN pnpm build
 
 # Production image, copy all the files and run next
-FROM node:25-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
