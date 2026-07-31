@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.25
 
 # Install dependencies only when needed
 FROM node:25-alpine AS deps
