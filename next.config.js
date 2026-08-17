@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  outputFileTracingIncludes: {
+    "/**": ["./node_modules/@swc/helpers/**"],
+  },
   experimental: {
     useTypeScriptCli: true,
   },
