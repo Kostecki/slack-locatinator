@@ -24,5 +24,5 @@ minimumReleaseAgeExclude:
   - sharp@0.35.0
 overrides:
   brace-expansion@<=5.0.7: 5.0.9
-  postcss@<8.5.10: 8.5.26
+  postcss@<8.5.10: 8.5.28
   sharp@<0.35.0: 0.35.4
