@@ -3,9 +3,9 @@ services:
     image: ghcr.io/kostecki/slack-locatinator:latest
     restart: unless-stopped
     container_name: slack
-    hostname: locatinator-docker-tower
+    hostname: ${APP_HOSTNAME:-locatinator}
     ports:
-      - 3004:3000
+      - ${APP_PORT:-3000}:3000
     environment:
       MAPBOX_TOKEN: ${MAPBOX_TOKEN}
       SLACK_OAUTH_TOKEN: ${SLACK_OAUTH_TOKEN}
