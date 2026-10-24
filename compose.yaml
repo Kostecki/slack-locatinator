@@ -2,8 +2,8 @@ services:
   locatinator:
     image: ghcr.io/kostecki/slack-locatinator:latest
     restart: unless-stopped
-    container_name: slack
-    hostname: ${APP_HOSTNAME:-locatinator}
+    container_name: slack-locatinator
+    hostname: slack-locatinator
     ports:
       - ${APP_PORT:-3000}:3000
     environment:
