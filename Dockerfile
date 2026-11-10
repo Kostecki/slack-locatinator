@@ -1,24 +1,25 @@
 # syntax=docker/dockerfile:1.28
 
 # Install dependencies only when needed
-FROM node:26-alpine AS deps
-RUN npm install -g pnpm@10
+FROM node:26.13.0-alpine AS deps
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
 
-# Install dependencies with pnpm only
+# Install dependencies with pnpm only (its version comes from packageManager in package.json)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN npm install -g "$(node -p "require('./package.json').packageManager")" && npm cache clean --force
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
   pnpm install --frozen-lockfile --store-dir=/pnpm/store
 
 
 # Rebuild the source code only when needed
-FROM node:26-alpine AS builder
-RUN npm install -g pnpm@10
+FROM node:26.13.0-alpine AS builder
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
+COPY package.json ./
+RUN npm install -g "$(node -p "require('./package.json').packageManager")" && npm cache clean --force
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -28,7 +29,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN pnpm build
 
 # Production image, copy all the files and run next
-FROM node:26-alpine AS runner
+FROM node:26.13.0-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
