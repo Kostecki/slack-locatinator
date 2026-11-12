@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.28
 
 # Install dependencies only when needed
-FROM node:26.13.0-alpine AS deps
+FROM node:26.13.1-alpine AS deps
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 
 
 # Rebuild the source code only when needed
-FROM node:26.13.0-alpine AS builder
+FROM node:26.13.1-alpine AS builder
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
@@ -29,7 +29,7 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN pnpm build
 
 # Production image, copy all the files and run next
-FROM node:26.13.0-alpine AS runner
+FROM node:26.13.1-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
